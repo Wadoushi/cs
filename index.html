@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Special Page</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: sans-serif;
+            text-align: center;
+            overflow-x: hidden;
+            min-height: 150vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* すなあらし起動演出 */
+        .zapping {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            z-index: 9999;
+            pointer-events: none;
+            animation: noise 0.6s steps(4) forwards;
+        }
+        @keyframes noise {
+            0% { opacity: 1; background: #fff; transform: scaleY(0.02); }
+            50% { opacity: 0.7; background: #222; transform: scaleY(0.8); }
+            100% { opacity: 0; background: #000; visibility: hidden; }
+        }
+
+        /* 画面いっぱいに広がるメインコンテナ */
+        .container {
+            position: relative;
+            width: 95%;
+            max-width: 480px;
+            margin: 10px auto 200px auto;
+            text-align: left;
+        }
+
+        /* 右側の書道画像（81203.png）：位置とサイズを完全固定 */
+        .calligraphy {
+            position: absolute;
+            top: 0;
+            right: -10px;
+            width: 44%;
+            height: 640px;
+            object-fit: contain;
+            pointer-events: none;
+            z-index: 5;
+            filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.95));
+        }
+
+        /* メイン画像 */
+        .hero-img-wrap {
+            position: relative;
+            width: 100%;
+        }
+        .hero-img-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* 黒目の位置の正確なタップエリア（ハイライト完全排除） */
+        .eye-btn {
+            position: absolute;
+            top: 61%;
+            left: 43%;
+            width: 45px;
+            height: 35px;
+            transform: translate(-50%, -50%);
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        /* 写真真ん中下のテキスト（背景なし・影のみ） */
+        .hero-text-box {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            text-align: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+        #hero-sub {
+            font-size: 0.65rem;
+            color: #f3f4f6;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+            letter-spacing: 0.08em;
+        }
+
+        /* 3Dサイコロのポップアップレイヤー */
+        .dice-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s ease;
+            z-index: 20;
+        }
+        .dice-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dice-scene {
+            width: 180px;
+            height: 180px;
+            perspective: 800px;
+        }
+        .dice-cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: spin 12s infinite linear;
+        }
+        @keyframes spin {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+        .dice-face {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            overflow: hidden;
+            background: #000;
+        }
+        .dice-face img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .f1 { transform: rotateY(0deg) translateZ(90px); }
+        .f2 { transform: rotateY(90deg) translateZ(90px); }
+        .f3 { transform: rotateY(180deg) translateZ(90px); }
+        .f4 { transform: rotateY(-90deg) translateZ(90px); }
+        .f5 { transform: rotateX(90deg) translateZ(90px); }
+        .f6 { transform: rotateX(-90deg) translateZ(90px); }
+
+        /* プロフィール説明文エリア */
+        .bio-area {
+            width: 100%;
+            margin-top: 12px;
+            text-align: left;
+            font-size: 0.65rem;
+            line-height: 1.6;
+            color: #d1d5db;
+            white-space: pre-wrap;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="zapping"></div>
+
+    <div class="container" id="mainContainer">
+        
+        <!-- 右側の書道画像 -->
+        <img src="81203.png" alt="和瞳子" class="calligraphy">
+
+        <!-- メイン写真セクション -->
+        <div class="hero">
+            <div class="hero-img-wrap">
+                <img src="81201.jpg" alt="Main">
+                
+                <!-- 黒目タップボタン -->
+                <div class="eye-btn" onclick="toggleDice(event)"></div>
+                
+                <!-- 写真下のテキスト -->
+                <div class="hero-text-box">
+                    <span id="hero-sub"></span>
+                </div>
+                
+                <!-- サイコロポップアップ -->
+                <div class="dice-overlay" id="diceOverlay" onclick="closeDice(event)">
+                    <a href="https://linkco.re/5ReNPc9n" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="display:block;">
+                        <div class="dice-scene">
+                            <div class="dice-cube">
+                                <div class="dice-face f1"><img src="81202.png" alt=""></div>
+                                <div class="dice-face f2"><img src="81202.png" alt=""></div>
+                                <div class="dice-face f3"><img src="81202.png" alt=""></div>
+                                <div class="dice-face f4"><img src="81202.png" alt=""></div>
+                                <div class="dice-face f5"><img src="81202.png" alt=""></div>
+                                <div class="dice-face f6"><img src="81202.png" alt=""></div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- プロフィール説明文 -->
+        <div class="bio-area" id="bioBox"></div>
+
+    </div>
+
+    <script>
+        function toggleDice(e) {
+            if(e) e.stopPropagation();
+            var ov = document.getElementById('diceOverlay');
+            if(ov) ov.classList.toggle('show');
+        }
+        function closeDice(e) {
+            var ov = document.getElementById('diceOverlay');
+            if(ov) ov.classList.remove('show');
+        }
+
+        // 写真下のタイプライター
+        var hText = "真実の目に触れてみてくれ";
+        var hIdx = 0;
+        function runHeroType() {
+            if(hIdx < hText.length) {
+                var el = document.getElementById('hero-sub');
+                if(el) el.textContent += hText.charAt(hIdx);
+                hIdx++;
+                setTimeout(runHeroType, 150);
+            }
+        }
+
+        // プロフィール本文
+        var bioText = "音と詩の境界を融解させる\n" +
+                      "2002年生まれの先鋭的音楽家／表現者\n" +
+                      "ヒップホップをベースに据えながらも\n" +
+                      "そのフォーマットを解体・再構築する\n" +
+                      "ジャンルレスなアプローチを展開\n" +
+                      "多層的なシネマティック・サウンドのなかで\n" +
+                      "声さえも一つの楽器へと昇華させる\n" +
+                      "人間の内面の葛藤や美学を鮮烈に描き出す\n" +
+                      "卓越した韻律とフロー状態は\n" +
+                      "聴き手の五感を刺激し\n" +
+                      "心の奥深くへ強烈な衝撃を刻み込む\n" +
+                      "既存のラッパーの概念を超越し\n" +
+                      "その多角的な芸術性はすでに国境を越えて伝播している\n" +
+                      "1st Album\n" +
+                      "『Psytec Symmetry/対象造形美』\n" +
+                      "が証明するように\n" +
+                      "彼は次世代の音楽の可能性を切り拓く\n" +
+                      "世界が注視すべき表現者である…";
+
+        var bIdx = 0;
+        var bioStarted = false;
+        function runBioType() {
+            if(bIdx < bioText.length) {
+                var el = document.getElementById('bioBox');
+                if(el) el.textContent += bioText.charAt(bIdx);
+                bIdx++;
+                setTimeout(runBioType, 80);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(runHeroType, 700);
+
+            // スクロールまたはタイマーでプロフィール文を開始
+            window.addEventListener('scroll', function() {
+                if(!bioStarted && window.scrollY > 30) {
+                    bioStarted = true;
+                    runBioType();
+                }
+            });
+
+            // 万が一スクロールしなくても数秒後に自動スタートする安全装置
+            setTimeout(function() {
+                if(!bioStarted) {
+                    bioStarted = true;
+                    runBioType();
+                }
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
